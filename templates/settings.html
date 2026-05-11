@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Settings • {{ theme.logo }}{% endblock %}
+{% set active = "settings" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h2 class="mb-1">Settings</h2>
+    <div class="muted">Local app settings and environment notes.</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card p-3">
+      <h5 class="mb-2">App Info</h5>
+      <div class="muted">This build stores everything locally in <span class="fw-bold">SQLite</span> (`farmlink.db`).</div>
+      <hr>
+      <div class="muted small fw-bold mb-1">Quick tips</div>
+      <ul class="mb-0">
+        <li>Change the secret key by setting <span class="fw-bold">FARMLINK_SECRET_KEY</span> in your environment.</li>
+        <li>Delete `farmlink.db` to regenerate demo data on next run.</li>
+        <li>Use the Reports page to export CSV snapshots.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card p-3" style="border:2px solid rgba(212,160,23,.55);">
+      <h5 class="mb-2">Brand</h5>
+      <div class="pill"><i class="fa-solid fa-leaf"></i> Primary: {{ theme.primary }}</div>
+      <div class="pill mt-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Accent: {{ theme.accent }}</div>
+      <div class="muted mt-3">FarmLink Poultry uses Google Fonts (Plus Jakarta Sans + DM Sans), Bootstrap 5, and Chart.js via CDN.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

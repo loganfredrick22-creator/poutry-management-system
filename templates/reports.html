@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Reports • {{ theme.logo }}{% endblock %}
+{% set active = "reports" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h2 class="mb-1">Reports</h2>
+    <div class="muted">Exportable analytics for performance, mortality, vaccination, and AI predictions.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-dark" href="{{ url_for('main.reports_export_performance') }}"><i class="fa-solid fa-file-csv me-1"></i> Export Performance CSV</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">Flock Performance Report</h5>
+        <span class="pill"><i class="fa-solid fa-chart-column"></i> Snapshot</span>
+      </div>
+      <div class="table-responsive mt-2">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Flock</th><th>Category</th><th>Alive</th><th>Sold</th><th>Dead</th><th>Avg Health</th><th>Vax Coverage</th><th>Risk</th></tr></thead>
+          <tbody>
+            {% for r in perf_rows %}
+            <tr>
+              <td class="fw-bold">{{ r.name }}</td>
+              <td>{{ r.category }}</td>
+              <td>{{ r.alive }}</td>
+              <td>{{ r.sold }}</td>
+              <td>{{ r.dead }}</td>
+              <td><span class="fw-bold">{{ r.avg_health }}</span><span class="muted">/100</span></td>
+              <td class="fw-bold">{{ r.vax_cov|int }}%</td>
+              <td class="fw-bold">{{ r.risk }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-6">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h5 class="mb-0">Mortality Analysis (Causes)</h5>
+        <span class="pill"><i class="fa-solid fa-chart-pie"></i> Breakdown</span>
+      </div>
+      <div style="height:320px;"><canvas id="chartMortalityCauses"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h5 class="mb-0">Vaccination Coverage (by flock)</h5>
+        <span class="pill"><i class="fa-solid fa-syringe"></i> Coverage</span>
+      </div>
+      <div style="height:320px;"><canvas id="chartVax"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h5 class="mb-0">AI Prediction Summary (Top at-risk birds)</h5>
+        <span class="pill"><i class="fa-solid fa-robot"></i> Risk</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Bird</th><th>Flock</th><th>Health</th><th>Risk (14d)</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for b in risk_rows %}
+            <tr>
+              <td class="fw-bold code-like">{{ b.leg }}</td>
+              <td>{{ b.flock }}</td>
+              <td><span class="fw-bold">{{ b.hs }}</span><span class="muted">/100</span></td>
+              <td class="fw-bold">{{ b.risk|int }}%</td>
+              <td><a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.bird_profile', leg_band_number=b.leg, tab='ai') }}"><i class="fa-regular fa-eye me-1"></i> View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  new Chart(document.getElementById('chartMortalityCauses'), {
+    type:'pie',
+    data:{ labels: {{ mort_labels|tojson }}, datasets:[{ data: {{ mort_values|tojson }}, backgroundColor:['#c0392b','#d4a017','#2d6a4f','#0d6efd','#6c757d','#40916c'] }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+  });
+  new Chart(document.getElementById('chartVax'), {
+    type:'bar',
+    data:{ labels: {{ vax_labels|tojson }}, datasets:[{ label:'Coverage %', data: {{ vax_values|tojson }}, backgroundColor:'rgba(45,106,79,.65)', borderColor:'#2d6a4f', borderWidth:1 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, max:100 } } }
+  });
+</script>
+{% endblock %}
+

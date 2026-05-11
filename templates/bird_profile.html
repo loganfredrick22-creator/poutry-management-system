@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+{% block title %}Bird {{ bird.leg_band_number }} • {{ theme.logo }}{% endblock %}
+{% set active = "birds" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+  <div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="pill"><i class="fa-solid fa-id-badge"></i> Bird Profile</span>
+      <a href="{{ url_for('main.birds') }}" class="btn btn-sm btn-outline-dark"><i class="fa-solid fa-arrow-left me-1"></i> Back to Registry</a>
+    </div>
+    <h2 class="mt-2 mb-0">
+      <span class="code-like" style="font-size:1.15em;padding:.35rem .7rem;border-radius:999px;background:rgba(27,67,50,.10);border:1px solid rgba(27,67,50,.18);">
+        {{ bird.leg_band_number }}
+      </span>
+    </h2>
+    <div class="muted mt-1">{{ bird.breed }} • {{ bird.category }} • Registered {{ bird.registration_date.strftime('%Y-%m-%d') }}</div>
+  </div>
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div class="text-end">
+      <div class="muted small fw-bold mb-1">Current Status</div>
+      {% if bird.status=='alive' %}<span class="badge-status badge-alive">🟢 Alive</span>
+      {% elif bird.status=='dead' %}<span class="badge-status badge-dead">🔴 Dead</span>
+      {% else %}<span class="badge-status badge-sold">💰 Sold</span>{% endif %}
+    </div>
+    <div class="text-center">
+      <div class="muted small fw-bold mb-1">AI Health Score</div>
+      {% set ring = '#2d6a4f' if hs>=78 else ('#d4a017' if hs>=60 else '#c0392b') %}
+      <div class="progress-ring" style="--p:{{ hs }}; --ring-color:{{ ring }};">
+        <div class="inner">
+          <div>
+            <div class="fs-3 fw-bold" style="color:{{ ring }};">{{ hs }}</div>
+            <div class="muted small">/ 100</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card p-3" style="min-width:260px;">
+      <div class="d-flex justify-content-between">
+        <div><div class="muted small fw-bold">Days on Farm</div><div class="fs-5 fw-bold">{{ days_on_farm }}</div></div>
+        <div><div class="muted small fw-bold">Total Vaccines</div><div class="fs-5 fw-bold">{{ vax_cnt }}</div></div>
+      </div>
+      <div class="d-flex justify-content-between mt-2">
+        <div><div class="muted small fw-bold">Health Events</div><div class="fs-5 fw-bold">{{ he_cnt }}</div></div>
+        <div><div class="muted small fw-bold">Weight</div><div class="fs-5 fw-bold">{{ bird.weight_kg if bird.weight_kg is not none else '—' }}</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-xl-8">
+    <div class="card p-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2">
+          <span class="pill"><i class="fa-solid fa-warehouse"></i> {{ bird.flock.name if bird.flock else 'Unassigned' }}</span>
+          <span class="pill"><i class="fa-solid fa-cake-candles"></i> Age: {{ age_days }} days</span>
+          <span class="pill"><i class="fa-solid fa-layer-group"></i> Age Group: {{ age_group_label }}</span>
+        </div>
+        <div class="muted small">Flock risk: <span class="fw-bold">{{ flock_risk.label }}</span></div>
+      </div>
+
+      <ul class="nav nav-tabs mt-3">
+        <li class="nav-item"><button class="nav-link {% if tab=='overview' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tabOverview" type="button">Overview</button></li>
+        <li class="nav-item"><button class="nav-link {% if tab=='health' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tabHealth" type="button">Health & Vaccination Timeline</button></li>
+        <li class="nav-item"><button class="nav-link {% if tab=='growth' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tabGrowth" type="button">Growth & Productivity</button></li>
+        <li class="nav-item"><button class="nav-link {% if tab=='ai' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tabAI" type="button">AI Analysis</button></li>
+        <li class="nav-item"><button class="nav-link {% if tab=='audit' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tabAudit" type="button">Audit Log</button></li>
+      </ul>
+
+      <div class="tab-content pt-3">
+        <div class="tab-pane fade {% if tab=='overview' %}show active{% endif %}" id="tabOverview">
+          <div class="row g-3">
+            <div class="col-12 col-lg-7">
+              <div class="card p-3">
+                <h5 class="mb-2">Bird Details</h5>
+                <form method="post">
+                  <input type="hidden" name="action" value="update_bird">
+                  <div class="row g-2">
+                    <div class="col-md-6"><label class="form-label fw-bold">Breed</label><input class="form-control" name="breed" value="{{ bird.breed }}" required></div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold">Category</label>
+                      <select class="form-select" name="category" required>
+                        {% for c in ['Broiler','Layer','Breeder'] %}<option value="{{ c }}" {% if bird.category==c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Hatch Date</label><input type="date" class="form-control" name="hatch_date" value="{{ bird.hatch_date.strftime('%Y-%m-%d') }}" required></div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold">Status</label>
+                      <select class="form-select" name="status" required>
+                        <option value="alive" {% if bird.status=='alive' %}selected{% endif %}>Alive</option>
+                        <option value="sold" {% if bird.status=='sold' %}selected{% endif %}>Sold</option>
+                        <option value="dead" {% if bird.status=='dead' %}selected{% endif %}>Dead</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold">Assign Flock</label>
+                      <select class="form-select" name="flock_id">
+                        <option value="">Unassigned</option>
+                        {% for f in flocks %}<option value="{{ f.id }}" {% if bird.flock_id==f.id %}selected{% endif %}>{{ f.name }} ({{ f.category }})</option>{% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Current Weight (kg)</label><input type="number" step="0.01" class="form-control" name="weight_kg" value="{{ bird.weight_kg if bird.weight_kg is not none else '' }}"></div>
+                    <div class="col-12"><label class="form-label fw-bold">Notes</label><textarea class="form-control" name="notes" rows="3">{{ bird.notes or '' }}</textarea></div>
+                  </div>
+                  <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-accent" type="submit"><i class="fa-solid fa-floppy-disk me-1"></i> Save Changes</button>
+                    <a class="btn btn-outline-dark" href="{{ url_for('main.bird_profile', leg_band_number=bird.leg_band_number, tab='overview') }}">Reset</a>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="col-12 col-lg-5">
+              <div class="card p-3 mb-3">
+                <h5 class="mb-2">Assigned Flock</h5>
+                {% if bird.flock %}
+                  <div class="muted small">Flock</div><div class="fw-bold">{{ bird.flock.name }}</div>
+                  <div class="muted small mt-2">House/Location</div><div class="fw-bold">{{ bird.flock.house_location }}</div>
+                  <div class="muted small mt-2">Flock Avg Health</div><div class="fw-bold">{{ flock_avg|round(1) }}/100</div>
+                  <div class="muted small mt-2">Flock Risk</div><div class="fw-bold">{{ flock_risk.label }}</div>
+                  <div class="mt-3"><a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.flock_detail', flock_id=bird.flock.id) }}"><i class="fa-solid fa-warehouse me-1"></i> View Flock</a></div>
+                {% else %}
+                  <div class="muted">This bird is not assigned to a flock.</div>
+                {% endif %}
+              </div>
+              <div class="card p-3">
+                <h5 class="mb-2">Status Summary</h5>
+                <div class="muted">Health score updates based on recent events, vaccinations, flock mortality and weight trends.</div>
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                  <span class="pill"><i class="fa-solid fa-stethoscope"></i> Last disease: {{ last_disease }}</span>
+                  <span class="pill"><i class="fa-solid fa-syringe"></i> Vaccines: {{ vax_cnt }}</span>
+                  <span class="pill"><i class="fa-solid fa-skull-crossbones"></i> Flock mort 7d: {{ (m7*100)|round(1) }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade {% if tab=='health' %}show active{% endif %}" id="tabHealth">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h5 class="mb-0">Health & Vaccination Timeline</h5>
+            <button class="btn btn-accent" data-bs-toggle="collapse" data-bs-target="#addHealthForm"><i class="fa-solid fa-plus me-1"></i> Add Health Event</button>
+          </div>
+          <div class="collapse mb-3" id="addHealthForm">
+            <div class="card p-3">
+              <form method="post">
+                <input type="hidden" name="action" value="add_health_event">
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Event Type</label>
+                    <select class="form-select" name="event_type" required>
+                      <option value="vaccination">Vaccination</option><option value="disease">Disease</option><option value="treatment">Treatment</option><option value="checkup">Checkup</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3"><label class="form-label fw-bold">Date</label><input type="date" class="form-control" name="event_date" required></div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Severity</label>
+                    <select class="form-select" name="severity"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select>
+                  </div>
+                  <div class="col-md-3"><label class="form-label fw-bold">Medicine Used</label><input class="form-control" name="medicine_used"></div>
+                  <div class="col-md-3"><label class="form-label fw-bold">Dose</label><input class="form-control" name="dose"></div>
+                  <div class="col-12"><label class="form-label fw-bold">Notes/Description</label><textarea class="form-control" name="description" rows="2" required></textarea></div>
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                  <button class="btn btn-accent" type="submit">Save Event</button>
+                  <button class="btn btn-outline-dark" type="button" data-bs-toggle="collapse" data-bs-target="#addHealthForm">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="timeline">
+            {% for e in events %}
+              <div class="timeline-item">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                  <div class="fw-bold">
+                    {% if e.event_type=='vaccination' %}<i class="fa-solid fa-syringe text-success me-1"></i>{% endif %}
+                    {% if e.event_type=='disease' %}<i class="fa-solid fa-virus text-danger me-1"></i>{% endif %}
+                    {% if e.event_type=='treatment' %}<i class="fa-solid fa-capsules text-primary me-1"></i>{% endif %}
+                    {% if e.event_type=='checkup' %}<i class="fa-solid fa-stethoscope text-warning me-1"></i>{% endif %}
+                    {{ e.event_type.title() }} <span class="muted">• {{ e.event_date.strftime('%Y-%m-%d') }}</span>
+                  </div>
+                  <div class="small muted">Recorded by <span class="fw-bold">{{ e.recorded_by }}</span> • Severity: <span class="fw-bold">{{ e.severity }}</span></div>
+                </div>
+                <div class="mt-1">{{ e.description }}</div>
+                {% if e.medicine_used or e.dose %}
+                  <div class="muted small mt-1">
+                    {% if e.medicine_used %}<span class="me-3"><i class="fa-solid fa-vial me-1"></i>{{ e.medicine_used }}</span>{% endif %}
+                    {% if e.dose %}<span><i class="fa-solid fa-ruler-combined me-1"></i>{{ e.dose }}</span>{% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            {% if events|length==0 %}<div class="muted">No health events recorded yet.</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="tab-pane fade {% if tab=='growth' %}show active{% endif %}" id="tabGrowth">
+          <div class="row g-3">
+            <div class="col-12 col-lg-7">
+              <div class="card p-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center mb-2">
+                  <h5 class="mb-0">Growth / Productivity Charts</h5>
+                  <span class="pill"><i class="fa-solid fa-chart-simple"></i> Live</span>
+                </div>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <div class="muted small fw-bold mb-1">Weight trend (kg)</div>
+                    <div style="height:220px;"><canvas id="chartWeights"></canvas></div>
+                  </div>
+                  <div class="col-12">
+                    <div class="muted small fw-bold mb-1">Egg production per week (layers)</div>
+                    <div style="height:220px;"><canvas id="chartEggs"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-5">
+              <div class="card p-3 mb-3">
+                <h5 class="mb-2">Add Measurement</h5>
+                <div class="muted small">For broilers, record weights weekly. For layers, record daily/weekly eggs.</div>
+                <hr>
+                <form method="post" class="row g-2">
+                  <input type="hidden" name="action" value="add_weight">
+                  <div class="col-6"><label class="form-label fw-bold">Weight Date</label><input type="date" class="form-control" name="recorded_date"></div>
+                  <div class="col-6"><label class="form-label fw-bold">Weight (kg)</label><input type="number" step="0.01" class="form-control" name="weight_kg"></div>
+                  <div class="col-12"><button class="btn btn-accent w-100" type="submit"><i class="fa-solid fa-plus me-1"></i> Add Weight</button></div>
+                </form>
+                <div class="mt-3"></div>
+                <form method="post" class="row g-2">
+                  <input type="hidden" name="action" value="add_eggs">
+                  <div class="col-6"><label class="form-label fw-bold">Egg Date</label><input type="date" class="form-control" name="date"></div>
+                  <div class="col-6"><label class="form-label fw-bold">Count</label><input type="number" min="0" class="form-control" name="count"></div>
+                  <div class="col-12"><button class="btn btn-outline-dark w-100" type="submit"><i class="fa-solid fa-egg me-1"></i> Add Egg Record</button></div>
+                </form>
+              </div>
+              <div class="card p-3">
+                <h5 class="mb-2">All Measurements</h5>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Date</th><th>Weight (kg)</th><th>Eggs</th></tr></thead>
+                    <tbody>
+                      {% for row in meas_rows %}
+                        <tr><td class="small">{{ row.date }}</td><td class="small">{{ row.weight }}</td><td class="small">{{ row.eggs }}</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% if meas_rows|length==0 %}<div class="muted mt-2">No measurements recorded yet.</div>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade {% if tab=='ai' %}show active{% endif %}" id="tabAI">
+          <div class="row g-3">
+            <div class="col-12 col-lg-6">
+              <div class="card p-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center">
+                  <h5 class="mb-0">Predicted Risk Score</h5>
+                  <span class="pill"><i class="fa-solid fa-shield-heart"></i> 14-day window</span>
+                </div>
+                <div class="mt-2">
+                  <div class="fs-2 fw-bold">{{ (mort_prob*100)|round(0)|int }}%</div>
+                  <div class="muted">Estimated probability of mortality within next 14 days.</div>
+                  <div class="mt-2"><div class="muted small fw-bold mb-1">Explanation</div><div>{{ mort_explain }}</div></div>
+                  <div class="mt-3">
+                    <div class="muted small fw-bold mb-1">Survival probability gauge</div>
+                    <div class="progress" style="height:12px;">
+                      <div class="progress-bar" style="width:{{ (100-mort_prob*100) }}%;background:#2d6a4f;"></div>
+                      <div class="progress-bar" style="width:{{ (mort_prob*100) }}%;background:#c0392b;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small muted mt-1"><span>Survival</span><span>Risk</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6">
+              <div class="card p-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center">
+                  <h5 class="mb-0">Recommended Actions</h5>
+                  <span class="pill"><i class="fa-solid fa-list-check"></i> Next steps</span>
+                </div>
+                <div class="mt-2">
+                  <ul class="mb-0">{% for a in ai_actions %}<li class="mb-1">{{ a }}</li>{% endfor %}</ul>
+                </div>
+                <hr>
+                <div class="muted small fw-bold mb-1">Anomaly flags</div>
+                <div class="d-flex flex-wrap gap-2">
+                  {% for flag in anomaly_flags %}<span class="pill"><i class="fa-solid fa-flag"></i> {{ flag }}</span>{% endfor %}
+                  {% if anomaly_flags|length==0 %}<span class="muted">No anomalies flagged.</span>{% endif %}
+                </div>
+              </div>
+            </div>
+            {% if prod_fc.enabled %}
+            <div class="col-12">
+              <div class="card p-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center">
+                  <h5 class="mb-0">Productivity Forecaster (Layers)</h5>
+                  <span class="pill"><i class="fa-solid fa-egg"></i> Next 7 days</span>
+                </div>
+                {% if prod_fc.note %}<div class="muted mt-2">{{ prod_fc.note }}</div>{% endif %}
+                {% if prod_fc.next_7_days %}
+                <div class="table-responsive mt-2">
+                  <table class="table table-sm mb-0">
+                    <thead><tr><th>Date</th><th>Predicted eggs</th></tr></thead>
+                    <tbody>{% for p in prod_fc.next_7_days %}<tr><td class="small">{{ p.date }}</td><td class="fw-bold">{{ p.predicted }}</td></tr>{% endfor %}</tbody>
+                  </table>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="tab-pane fade {% if tab=='audit' %}show active{% endif %}" id="tabAudit">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <h5 class="mb-0">Audit Log</h5>
+              <span class="pill"><i class="fa-solid fa-clock-rotate-left"></i> Immutable history</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead><tr><th style="width:190px;">Timestamp</th><th style="width:160px;">Field</th><th>Old</th><th>New</th></tr></thead>
+                <tbody>
+                  {% for a in audits %}
+                  <tr>
+                    <td class="small">{{ a.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="fw-bold">{{ a.field_changed }}</td>
+                    <td class="muted small">{{ a.old_value }}</td>
+                    <td class="small">{{ a.new_value }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% if audits|length==0 %}<div class="muted mt-2">No audit entries yet.</div>{% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="card p-3 mb-3" style="border:2px solid rgba(212,160,23,.55);">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">🤖 AI Snapshot</h5>
+        <span class="pill"><i class="fa-solid fa-bolt"></i> Live</span>
+      </div>
+      <div class="mt-2">
+        <div class="muted small">Use “AI Analysis” tab for detailed predictions and actions.</div>
+        <div class="mt-2 d-flex flex-wrap gap-2">
+          <span class="pill"><i class="fa-solid fa-shield-heart"></i> Risk: {{ (mort_prob*100)|round(0)|int }}%</span>
+          <span class="pill"><i class="fa-solid fa-skull-crossbones"></i> Flock mort 7d: {{ (m7*100)|round(1) }}%</span>
+          <span class="pill"><i class="fa-solid fa-stethoscope"></i> Last disease: {{ last_disease }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card p-3">
+      <h5 class="mb-2">Quick Actions</h5>
+      <div class="d-grid gap-2">
+        <a class="btn btn-accent" href="{{ url_for('main.bird_profile', leg_band_number=bird.leg_band_number, tab='health') }}"><i class="fa-solid fa-notes-medical me-1"></i> Add Health Event</a>
+        <a class="btn btn-outline-dark" href="{{ url_for('main.flock_detail', flock_id=bird.flock.id) if bird.flock else url_for('main.flocks') }}"><i class="fa-solid fa-warehouse me-1"></i> View Flock</a>
+        <a class="btn btn-outline-dark" href="{{ url_for('main.health') }}"><i class="fa-solid fa-heart-pulse me-1"></i> Health Monitoring</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  async function renderWeights(){
+    const res = await fetch("{{ url_for('api.bird_weights', leg_band_number=bird.leg_band_number) }}");
+    const data = await res.json();
+    const ctx = document.getElementById('chartWeights'); if(!ctx) return;
+    new Chart(ctx, { type:'line',
+      data:{ labels:data.labels, datasets:[{ label:'Weight (kg)', data:data.values, borderColor:'#2d6a4f', backgroundColor:'rgba(45,106,79,.12)', tension:.35, fill:true }]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+    });
+  }
+  async function renderEggs(){
+    const res = await fetch("{{ url_for('api.bird_eggs_weekly', leg_band_number=bird.leg_band_number) }}");
+    const data = await res.json();
+    const ctx = document.getElementById('chartEggs'); if(!ctx) return;
+    new Chart(ctx, { type:'bar',
+      data:{ labels:data.labels, datasets:[{ label:'Eggs', data:data.values, backgroundColor:'rgba(212,160,23,.65)', borderColor:'#d4a017', borderWidth:1 }]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+  renderWeights(); renderEggs();
+</script>
+{% endblock %}
+

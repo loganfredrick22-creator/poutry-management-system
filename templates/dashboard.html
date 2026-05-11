@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Dashboard • {{ theme.logo }}{% endblock %}
+{% set active = "dashboard" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h2 class="mb-1">Dashboard</h2>
+    <div class="muted">Real-time flock KPIs, trends, and AI recommendations.</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if config.is_editing_enabled(current_user.role) %}
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#modalRegisterBird">
+      <i class="fa-solid fa-plus me-1"></i> Register New Bird
+    </button>
+    <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalCreateFlock">
+      <i class="fa-solid fa-circle-plus me-1"></i> Create Flock
+    </button>
+    <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalHealthEvent">
+      <i class="fa-solid fa-notes-medical me-1"></i> Record Health Event
+    </button>
+    {% endif %}
+    <button class="btn btn-outline-dark" onclick="scrollToId('ai_insights')">
+      <i class="fa-solid fa-robot me-1"></i> View AI Insights
+    </button>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="muted small fw-bold">Total Birds Registered</div>
+          <div class="fs-2 fw-bold">{{ total_birds }}</div>
+        </div>
+        <div class="kpi-icon" style="background:#2d6a4f;"><i class="fa-solid fa-feather-pointed"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="muted small fw-bold">Active Flocks</div>
+          <div class="fs-2 fw-bold">{{ active_flocks }}</div>
+        </div>
+        <div class="kpi-icon" style="background:#40916c;"><i class="fa-solid fa-warehouse"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="muted small fw-bold">Mortality This Month</div>
+          <div class="fs-2 fw-bold">{{ mort_month }}</div>
+        </div>
+        <div class="kpi-icon" style="background:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="muted small fw-bold">Avg Flock Health Score</div>
+          <div class="fs-2 fw-bold">{{ avg_health }}/100</div>
+        </div>
+        <div class="kpi-icon" style="background:#d4a017;"><i class="fa-solid fa-heart-pulse"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-7">
+    <div class="card p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h5 class="mb-0">Population Trend (6 months)</h5>
+        <span class="pill"><i class="fa-solid fa-chart-line"></i> Live</span>
+      </div>
+      <div style="height:320px;"><canvas id="chartPopulation"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h5 class="mb-0">Flock Composition</h5>
+        <span class="pill"><i class="fa-solid fa-circle-nodes"></i> Category</span>
+      </div>
+      <div style="height:320px;"><canvas id="chartComposition"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3" id="ai_insights">
+  <div class="col-12">
+    <div class="card p-3" style="border:2px solid rgba(212,160,23,.55);">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">🤖 AI Recommendations</h5>
+        <span class="pill"><i class="fa-solid fa-lightbulb"></i> Actionable</span>
+      </div>
+      <div class="mt-2">
+        <ul class="mb-0">
+          {% for r in recs %}<li class="mb-1">{{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card p-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h5 class="mb-0">Recent Activity</h5>
+        <a href="{{ url_for('main.health') }}" class="btn btn-sm btn-outline-dark">View Health</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th style="width:180px;">Timestamp</th><th style="width:220px;">Type</th><th>Details</th></tr></thead>
+          <tbody>
+            {% for a in activities %}
+            <tr>
+              <td class="small">{{ a.ts.strftime('%Y-%m-%d') }}</td>
+              <td class="fw-bold">{{ a.type }}</td>
+              <td class="muted">{{ a.detail }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Register Bird Modal -->
+<div class="modal fade" id="modalRegisterBird" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-feather-pointed me-2"></i>Register New Bird</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{{ url_for('main.register_bird') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label fw-bold">Leg Band Number *</label><input class="form-control" name="leg_band_number" required></div>
+            <div class="col-md-6"><label class="form-label fw-bold">Breed *</label><input class="form-control" name="breed" required></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Category *</label>
+              <select class="form-select" name="category" required>
+                <option value="Broiler">Broiler</option><option value="Layer">Layer</option><option value="Breeder">Breeder</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Hatch Date *</label><input type="date" class="form-control" name="hatch_date" required></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Assign to Flock *</label>
+              <select class="form-select" name="flock_id" required>
+                {% for f in flocks %}<option value="{{ f.id }}">{{ f.name }} ({{ f.category }})</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Initial Weight (kg)</label><input type="number" step="0.01" class="form-control" name="weight_kg"></div>
+            <div class="col-12"><label class="form-label fw-bold">Notes</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-accent" type="submit">Create Bird</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Create Flock Modal -->
+<div class="modal fade" id="modalCreateFlock" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-warehouse me-2"></i>Create Flock</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{{ url_for('main.create_flock') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-7"><label class="form-label fw-bold">Flock Name *</label><input class="form-control" name="name" required></div>
+            <div class="col-md-5"><label class="form-label fw-bold">House/Location *</label><input class="form-control" name="house_location" required></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Category *</label>
+              <select class="form-select" name="category" required>
+                <option value="Broiler">Broiler</option><option value="Layer">Layer</option><option value="Breeder">Breeder</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Start Date *</label><input type="date" class="form-control" name="start_date" required></div>
+            <div class="col-12"><label class="form-label fw-bold">Notes</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-accent" type="submit">Create Flock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Record Health Event Modal -->
+<div class="modal fade" id="modalHealthEvent" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-notes-medical me-2"></i>Record Health Event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{{ url_for('main.record_health_event') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Bird (search by leg band) *</label>
+              <input class="form-control" list="birdList" name="leg_band_number" required>
+              <datalist id="birdList">{% for b in birds %}<option value="{{ b.leg_band_number }}">{{ b.leg_band_number }}</option>{% endfor %}</datalist>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Event Type *</label>
+              <select class="form-select" name="event_type" required>
+                <option value="vaccination">Vaccination</option><option value="disease">Disease</option><option value="treatment">Treatment</option><option value="checkup">Checkup</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Date *</label><input type="date" class="form-control" name="event_date" required></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Severity</label>
+              <select class="form-select" name="severity"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select>
+            </div>
+            <div class="col-12"><label class="form-label fw-bold">Description *</label><textarea class="form-control" name="description" rows="3" required></textarea></div>
+            <div class="col-md-6"><label class="form-label fw-bold">Medicine Used</label><input class="form-control" name="medicine_used"></div>
+            <div class="col-md-6"><label class="form-label fw-bold">Dose</label><input class="form-control" name="dose"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-accent" type="submit">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  async function loadPopulation(){
+    const res = await fetch("{{ url_for('api.population_trend') }}");
+    const data = await res.json();
+    new Chart(document.getElementById('chartPopulation'), {
+      type:'line',
+      data:{ labels:data.labels, datasets:[
+        {label:'Alive', data:data.alive, borderColor:'#2d6a4f', backgroundColor:'rgba(45,106,79,.12)', tension:.35, fill:true},
+        {label:'Sold', data:data.sold, borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,.08)', tension:.35, fill:true},
+        {label:'Dead', data:data.dead, borderColor:'#c0392b', backgroundColor:'rgba(192,57,43,.08)', tension:.35, fill:true},
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+  async function loadComposition(){
+    const res = await fetch("{{ url_for('api.flock_composition') }}");
+    const data = await res.json();
+    new Chart(document.getElementById('chartComposition'), {
+      type:'doughnut',
+      data:{ labels:data.labels, datasets:[{ data:data.values, backgroundColor:['#2d6a4f','#d4a017','#40916c'], borderWidth:1 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+    });
+  }
+  loadPopulation(); loadComposition();
+</script>
+{% endblock %}
+

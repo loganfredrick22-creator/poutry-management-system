@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Flocks • {{ theme.logo }}{% endblock %}
+{% set active = "flocks" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h2 class="mb-1">Flock Management</h2>
+    <div class="muted">View flock performance, health risk, and bird rosters.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-accent" href="{{ url_for('main.dashboard') }}" data-bs-toggle="modal" data-bs-target="#modalCreateFlockInline" onclick="return false;">
+      <i class="fa-solid fa-circle-plus me-1"></i> Create Flock
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for c in cards %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="pill mb-2"><i class="fa-solid fa-warehouse"></i> {{ c.flock.category }}</div>
+          <h5 class="mb-1">{{ c.flock.name }}</h5>
+          <div class="muted small">{{ c.flock.house_location }} • Started {{ c.flock.start_date.strftime('%Y-%m-%d') }}</div>
+        </div>
+        <div class="text-end">
+          <div class="muted small fw-bold">Bird Count</div>
+          <div class="fs-3 fw-bold">{{ c.count }}</div>
+        </div>
+      </div>
+      <hr>
+      <div class="d-flex justify-content-between">
+        <div><div class="muted small fw-bold">Avg Health</div><div class="fw-bold">{{ c.avg|round(1) }}/100</div></div>
+        <div><div class="muted small fw-bold">Risk</div><div class="fw-bold">{{ c.risk }}</div></div>
+        <div class="text-end"><div class="muted small fw-bold">Last Updated</div><div class="fw-bold">{{ c.last }}</div></div>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.flock_detail', flock_id=c.flock.id) }}"><i class="fa-regular fa-eye me-1"></i> View</a>
+        <a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.flock_detail', flock_id=c.flock.id) }}#edit"><i class="fa-regular fa-pen-to-square me-1"></i> Edit</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Inline Create Flock modal -->
+<div class="modal fade" id="modalCreateFlockInline" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-warehouse me-2"></i>Create Flock</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{{ url_for('main.create_flock') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-7"><label class="form-label fw-bold">Flock Name *</label><input class="form-control" name="name" required></div>
+            <div class="col-md-5"><label class="form-label fw-bold">House/Location *</label><input class="form-control" name="house_location" required></div>
+            <div class="col-md-6"><label class="form-label fw-bold">Category *</label>
+              <select class="form-select" name="category" required>
+                <option value="Broiler">Broiler</option><option value="Layer">Layer</option><option value="Breeder">Breeder</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Start Date *</label><input type="date" class="form-control" name="start_date" required></div>
+            <div class="col-12"><label class="form-label fw-bold">Notes</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-accent" type="submit">Create Flock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

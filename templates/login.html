@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login • {{ theme.logo }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{ --primary:{{ theme.primary }}; --accent:{{ theme.accent }}; --bg:{{ theme.bg }}; --text:{{ theme.text }}; }
+    body{ margin:0; min-height:100vh; font-family:'{{ theme.body_font }}',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text); background:var(--bg); }
+    h1,h2,h3,h4{ font-family:'{{ theme.heading_font }}',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; letter-spacing:-0.02em; }
+    .split{ display:grid; grid-template-columns:1.1fr .9fr; min-height:100vh; }
+    @media (max-width: 992px){ .split{ grid-template-columns:1fr; } .brand-panel{ min-height:38vh; } }
+    .brand-panel{ background:var(--primary); color:rgba(255,255,255,.94); padding:56px 44px; display:flex; align-items:center; }
+    .brand-card{ max-width:560px; }
+    .logo{ font-weight:800; font-size:34px; }
+    .tagline{ font-size:20px; opacity:.92; margin-top:10px; }
+    .pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.35rem .75rem; border-radius:999px; background:rgba(212,160,23,.14); border:1px solid rgba(212,160,23,.30); color:#fff; font-weight:800; margin-top:18px; }
+    .form-panel{ background:var(--bg); padding:56px 44px; display:flex; align-items:center; justify-content:center; }
+    .login-card{ width:100%; max-width:460px; background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:18px; box-shadow:0 12px 22px rgba(0,0,0,.08); padding:26px; }
+    .btn-accent{ background:var(--accent); border:1px solid rgba(0,0,0,.08); font-weight:800; color:#1a1a1a; }
+    .hint{ font-size:12.5px; color:rgba(44,44,44,.72); }
+  </style>
+</head>
+<body>
+  <div class="split">
+    <section class="brand-panel">
+      <div class="brand-card">
+        <div class="logo">{{ theme.logo }}</div>
+        <div class="tagline">Intelligent Flock. Better Farm.</div>
+        <div class="pill"><i class="fa-solid fa-wand-magic-sparkles"></i> AI-Enhanced Flock Intelligence</div>
+        <div class="mt-4" style="opacity:.88; line-height:1.7;">
+          Monitor health, track productivity, identify risk early, and keep audit-grade records — all locally portable with SQLite.
+        </div>
+      </div>
+    </section>
+    <section class="form-panel">
+      <div class="login-card">
+        <h3 class="mb-1">Sign in</h3>
+        <div class="hint mb-3">Seeded admin: <span class="fw-bold">admin</span> / <span class="fw-bold">admin123</span></div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-3">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} py-2 mb-2">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('auth.login_post') }}">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Username</label>
+            <input class="form-control form-control-lg" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Password</label>
+            <input type="password" class="form-control form-control-lg" name="password" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" value="on" id="remember" name="remember">
+            <label class="form-check-label" for="remember">Remember Me</label>
+          </div>
+          <button class="btn btn-accent btn-lg w-100" type="submit">
+            <i class="fa-solid fa-lock me-2"></i> Login
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

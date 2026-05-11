@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Bird Registry • {{ theme.logo }}{% endblock %}
+{% set active = "birds" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h2 class="mb-1">Bird Registry</h2>
+    <div class="muted">Search, filter, export, and manage individual bird records.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-accent" href="{{ url_for('main.dashboard') }}" data-bs-toggle="modal" data-bs-target="#modalRegisterBirdInline" onclick="return false;">
+      <i class="fa-solid fa-plus me-1"></i> Register New Bird
+    </a>
+    <a class="btn btn-outline-dark" href="{{ url_for('main.birds_export_csv', q=q, flock_id=flock_id, category=category, status=status, agegrp=agegrp) }}">
+      <i class="fa-solid fa-file-csv me-1"></i> Export CSV
+    </a>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-12 col-md-4">
+      <label class="form-label fw-bold">Search</label>
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Leg band, breed, flock...">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label fw-bold">Flock</label>
+      <select class="form-select" name="flock_id">
+        <option value="">All</option>
+        {% for f in flocks %}
+          <option value="{{ f.id }}" {% if flock_id|int == f.id %}selected{% endif %}>{{ f.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label fw-bold">Category</label>
+      <select class="form-select" name="category">
+        <option value="">All</option>
+        {% for c in ['Broiler','Layer','Breeder'] %}
+          <option value="{{ c }}" {% if category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label fw-bold">Status</label>
+      <select class="form-select" name="status">
+        <option value="">All</option>
+        <option value="alive" {% if status=='alive' %}selected{% endif %}>Alive</option>
+        <option value="sold" {% if status=='sold' %}selected{% endif %}>Sold</option>
+        <option value="dead" {% if status=='dead' %}selected{% endif %}>Dead</option>
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label fw-bold">Age Group</label>
+      <select class="form-select" name="agegrp">
+        <option value="">All</option>
+        {% for ag in age_groups %}
+          <option value="{{ ag }}" {% if agegrp==ag %}selected{% endif %}>{{ ag }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 d-flex gap-2 mt-2">
+      <button class="btn btn-accent" type="submit"><i class="fa-solid fa-filter me-1"></i> Apply</button>
+      <a class="btn btn-outline-dark" href="{{ url_for('main.birds') }}">Reset</a>
+      <div class="ms-auto muted small align-self-center">Showing <span class="fw-bold">{{ rows|length }}</span> of <span class="fw-bold">{{ total }}</span></div>
+    </div>
+  </form>
+</div>
+
+<div class="card p-3">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Leg Band #</th><th>Breed</th><th>Category</th><th>Hatch Date</th><th>Age</th><th>Flock</th><th>Status</th><th>Health Score</th><th style="width:220px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          {% set b = r.bird %}
+          <tr>
+            <td class="fw-bold code-like">{{ b.leg_band_number }}</td>
+            <td>{{ b.breed }}</td>
+            <td>{{ b.category }}</td>
+            <td class="small">{{ b.hatch_date.strftime('%Y-%m-%d') }}</td>
+            <td class="small">{{ r.age_label }} <span class="text-muted">({{ r.age_group }})</span></td>
+            <td>{{ b.flock.name if b.flock else 'Unassigned' }}</td>
+            <td>
+              {% if b.status=='alive' %}<span class="badge-status badge-alive">🟢 Alive</span>
+              {% elif b.status=='dead' %}<span class="badge-status badge-dead">🔴 Dead</span>
+              {% else %}<span class="badge-status badge-sold">💰 Sold</span>{% endif %}
+            </td>
+            <td><span class="fw-bold">{{ r.health_score }}</span><span class="muted">/100</span></td>
+            <td>
+              <a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.bird_profile', leg_band_number=b.leg_band_number) }}"><i class="fa-regular fa-eye me-1"></i> View</a>
+              <a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.bird_profile', leg_band_number=b.leg_band_number, tab='overview') }}"><i class="fa-regular fa-pen-to-square me-1"></i> Edit</a>
+              <a class="btn btn-sm btn-outline-dark" href="{{ url_for('main.bird_profile', leg_band_number=b.leg_band_number, tab='health') }}"><i class="fa-solid fa-notes-medical me-1"></i> Record Health</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+    <div class="muted small">Page {{ page }} / {{ pages }}</div>
+    <div class="ms-auto d-flex gap-2">
+      <a class="btn btn-sm btn-outline-dark {% if page<=1 %}disabled{% endif %}" href="{{ url_for('main.birds', q=q, flock_id=flock_id, category=category, status=status, agegrp=agegrp, page=page-1) }}">Prev</a>
+      <a class="btn btn-sm btn-outline-dark {% if page>=pages %}disabled{% endif %}" href="{{ url_for('main.birds', q=q, flock_id=flock_id, category=category, status=status, agegrp=agegrp, page=page+1) }}">Next</a>
+    </div>
+  </div>
+</div>
+
+<!-- Inline Register Bird modal -->
+<div class="modal fade" id="modalRegisterBirdInline" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-feather-pointed me-2"></i>Register New Bird</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{{ url_for('main.register_bird') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label fw-bold">Leg Band Number *</label><input class="form-control" name="leg_band_number" required></div>
+            <div class="col-md-6"><label class="form-label fw-bold">Breed *</label><input class="form-control" name="breed" required></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Category *</label>
+              <select class="form-select" name="category" required>
+                <option value="Broiler">Broiler</option><option value="Layer">Layer</option><option value="Breeder">Breeder</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Hatch Date *</label><input type="date" class="form-control" name="hatch_date" required></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Assign to Flock *</label>
+              <select class="form-select" name="flock_id" required>
+                {% for f in flocks %}<option value="{{ f.id }}">{{ f.name }} ({{ f.category }})</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label fw-bold">Initial Weight (kg)</label><input type="number" step="0.01" class="form-control" name="weight_kg"></div>
+            <div class="col-12"><label class="form-label fw-bold">Notes</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-accent" type="submit">Create Bird</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
