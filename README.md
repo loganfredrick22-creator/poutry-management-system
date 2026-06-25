@@ -86,7 +86,7 @@ cp .env.example .env
 python database/migrate_sqlite_to_mysql.py
 ```
 
-## ⚙️ Configuration
+##  Configuration
 
 ### Environment Variables
 ```bash
@@ -156,7 +156,7 @@ farmlnk-project/
 └── README.md                 # This file
 ```
 
-## 🔧 Development
+##  Development
 
 ### Adding New Features
 1. Create models in `models.py`
