@@ -1,10 +1,10 @@
 # FarmLink Poultry Management System
 
-🐔 **AI-Enhanced Flock Management and Bird Identification System**
+ **AI-Enhanced Flock Management and Bird Identification System**
 
 A comprehensive Flask-based web application for poultry farm management with AI-powered analytics, health monitoring, and bird tracking capabilities.
 
-## 🌟 Features
+##  Features
 
 ### Core Management
 - **Bird Registry**: Track individual birds with leg bands, breeds, and health records
@@ -31,7 +31,7 @@ A comprehensive Flask-based web application for poultry farm management with AI-
 - **MySQL**: Production-ready database with full migration support
 - **XAMPP Compatible**: Optimized for XAMPP deployment
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Option 1: Using XAMPP (Recommended for Windows)
 ```powershell
@@ -56,13 +56,13 @@ pip install -r requirements.txt
 .\run.ps1
 ```
 
-## 📋 Prerequisites
+##  Prerequisites
 
 - **Python 3.8+**
 - **MySQL Server** (for production) or **SQLite** (for development)
 - **XAMPP** (optional, for Windows deployment)
 
-## 🗄️ Database Setup
+##  Database Setup
 
 ### SQLite (Default)
 No setup required - database is created automatically on first run.
@@ -110,7 +110,7 @@ FARMLINK_SECRET_KEY=your-secret-key
 - **Admin-Only**: Only admin users can modify data (default)
 - **All Users**: All authenticated users can modify data (for hosted deployments)
 
-## 🌐 Deployment
+##  Deployment
 
 ### XAMPP Deployment
 1. Install XAMPP and start services
@@ -124,7 +124,7 @@ FARMLINK_SECRET_KEY=your-secret-key
 4. Configure reverse proxy (Apache/Nginx)
 5. Enable SSL/HTTPS
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 farmlnk-project/
@@ -184,7 +184,7 @@ The application uses the following main entities:
 - **Egg Production**: Productivity tracking
 - **Audit Logs**: Change tracking
 
-## 📊 AI Features
+##  AI Features
 
 ### Health Scoring Algorithm
 - Vaccination coverage analysis
@@ -204,7 +204,7 @@ The application uses the following main entities:
 - Growth trend analysis
 - Performance benchmarking
 
-## 🔒 Security
+##  Security
 
 ### Authentication
 - Bcrypt password hashing
@@ -218,13 +218,13 @@ The application uses the following main entities:
 - Configurable edit permissions
 - User management interface
 
-## 📚 Documentation
+##  Documentation
 
 - **[XAMPP_DEPLOYMENT.md](XAMPP_DEPLOYMENT.md)**: Comprehensive XAMPP setup guide
 - **[MYSQL_SETUP.md](MYSQL_SETUP.md)**: MySQL configuration and migration
 - **[README_XAMPP.md](README_XAMPP.md)**: Quick start guide
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -232,15 +232,15 @@ The application uses the following main entities:
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🐛 Issues & Support
+##  Issues & Support
 
 For bug reports and feature requests, please use the GitHub issue tracker.
 
-## 📈 Performance
+##  Performance
 
 ### Database Optimization
 - Indexed queries for fast lookups
@@ -252,7 +252,7 @@ For bug reports and feature requests, please use the GitHub issue tracker.
 - Static asset optimization
 - Efficient query patterns
 
-## 🔮 Future Features
+##  Future Features
 
 - Mobile application support
 - Advanced reporting dashboards
